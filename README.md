@@ -2,11 +2,11 @@
 
 Armazenamento e catálogo das camadas de dado da plataforma `lab-data`: um bucket S3 e um database do Glue por camada, mais o workgroup do Athena. A plataforma é construída **camada a camada**: hoje existe só o **bronze**; silver e gold entram depois. Visão geral em [data-platform](https://github.com/lab-data-platform/data-platform).
 
-> ⏳ **Camada 3 em construção, começando pelo bronze.** Silver e gold entram depois, uma de cada vez; o projeto dbt do lake, na **camada 5**. Escopo e critério de pronto no [ROADMAP](https://github.com/lab-data-platform/data-platform/blob/main/ROADMAP.md#camada-3--lakehouse).
+> ✅ **Bronze no ar** desde 2026-11-02 (etapa 3a). Silver e gold entram depois, uma de cada vez; o projeto dbt do lake, na **camada 5**. Escopo e critério de pronto no [ROADMAP](https://github.com/lab-data-platform/data-platform/blob/main/ROADMAP.md#camada-3--lakehouse).
 
-## Recursos na AWS (previstos)
+## Recursos na AWS
 
-O que este repositório cria na conta. **Região:** `us-east-2` (Ohio). No console, confira se o seletor de região (canto superior direito) está em **Ohio**.
+O que este repositório criou na conta. **Região:** `us-east-2` (Ohio). No console, confira se o seletor de região (canto superior direito) está em **Ohio**.
 
 | Serviço AWS | Recurso | Para que serve | Região | Custo | Código | Onde ver no console |
 |---|---|---|---|---|---|---|

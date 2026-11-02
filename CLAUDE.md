@@ -4,6 +4,8 @@ Repositório do lake da plataforma `lab-data`. Regras gerais, arquitetura e cont
 
 ## Específico deste repositório
 
-- **Status: planejado (camada 3).** Ainda não há código. Antes de começar, confirme o escopo da camada 3 com o usuário ([roadmap](../data-platform/ROADMAP.md#camada-3--lakehouse)).
-- Ao construir, siga a estrutura padrão de repositório e use o `data-foundation` como referência de Makefile, testes e contrato.
-- O projeto dbt só entra na camada 5.
+- **Status: camada 3 em construção.** O projeto dbt só entra na camada 5 ([roadmap](../data-platform/ROADMAP.md#camada-3--lakehouse)).
+- Lê o contrato do `data-foundation` (`name_prefix`, `account_id`) pelo SSM; nunca fixe esses valores no código.
+- Toda camada de dado nova passa pelo módulo `infra/modules/data-bucket`. A implementação de armazenamento de cada camada vem de `layer_storage`; hoje só existe `s3` (S3 Tables em avaliação, ADR-0014).
+- Antes de entregar uma mudança: `make fmt`, `make test` e o ciclo local (`make local-up`, `make local-test`, `make local-down`).
+- `apply`, `destroy` e `smoke-test` só com confirmação explícita do usuário. O `smoke-test` cria e apaga uma tabela na silver da conta real.

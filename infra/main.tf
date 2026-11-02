@@ -35,8 +35,8 @@ locals {
   # Databases do Glue usam "_", porque o Athena não aceita "-" em nomes.
   glue_prefix = replace(local.name_prefix, "-", "_")
 
-  # Camadas de dado (arquitetura medalhão).
-  layers = {
+  # Definição das camadas de dado (arquitetura medalhão). Só as listadas em var.layers são criadas.
+  layer_definitions = {
     bronze = {
       description = "Dado bruto, como veio da fonte, mais os metadados de ingestão"
       versioning  = true
@@ -51,6 +51,9 @@ locals {
     }
   }
 
-  # Camadas armazenadas em bucket S3 comum + Glue Catalog (implementação "s3").
-  s3_layers = { for k, v in local.layers : k => v if var.layer_storage[k] == "s3" }
+  # Camadas ligadas e armazenadas em bucket S3 comum + Glue Catalog (implementação "s3").
+  s3_layers = {
+    for k, v in local.layer_definitions : k => v
+    if contains(var.layers, k) && var.layer_storage[k] == "s3"
+  }
 }

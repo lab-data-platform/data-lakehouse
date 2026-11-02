@@ -1,5 +1,6 @@
 # Contrato publicado por este repositório no SSM Parameter Store.
-# Consumidores: data-ingestion (bronze) e o dbt do lake (silver e gold).
+# Consumidores: data-ingestion (bronze) e, quando ligadas, o dbt do lake (silver e gold).
+# Os parâmetros de uma camada só existem quando ela está em var.layers.
 # Catálogo em data-platform/docs/contratos.md: mudar um nome aqui é mudança de contrato.
 
 locals {

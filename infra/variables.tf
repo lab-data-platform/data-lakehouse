@@ -33,6 +33,25 @@ variable "s3_use_path_style" {
   default     = false
 }
 
+variable "layers" {
+  description = <<-EOT
+    Camadas de dado ligadas. A plataforma é construída camada a camada:
+    começa só com o bronze; silver e gold entram depois, acrescentando-as aqui.
+  EOT
+  type        = set(string)
+  default     = ["bronze"]
+
+  validation {
+    condition     = length(setsubtract(var.layers, ["bronze", "silver", "gold"])) == 0
+    error_message = "layers só aceita bronze, silver e gold."
+  }
+
+  validation {
+    condition     = contains(var.layers, "bronze")
+    error_message = "O bronze é obrigatório: é nele que a ingestão grava."
+  }
+}
+
 variable "layer_storage" {
   description = <<-EOT
     Implementação de armazenamento de cada camada de dado. Hoje só existe "s3" (bucket comum + Glue Catalog).

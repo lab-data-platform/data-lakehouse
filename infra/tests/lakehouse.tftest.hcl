@@ -25,18 +25,24 @@ override_data {
   }
 }
 
-run "buckets_seguem_a_convencao" {
+# --- Padrão: só o bronze ligado ---------------------------------------------
+
+run "por_padrao_so_o_bronze_existe" {
   command = plan
 
   assert {
-    condition = {
-      for k, b in module.layer_bucket : k => b.name
-      } == {
-      bronze = "lab-data-dev-bronze-123456789012"
-      silver = "lab-data-dev-silver-123456789012"
-      gold   = "lab-data-dev-gold-123456789012"
-    }
-    error_message = "Os buckets das camadas devem se chamar <prefixo>-<camada>-<account_id>."
+    condition     = keys(module.layer_bucket) == ["bronze"]
+    error_message = "Por padrão, só a camada bronze deve ser criada."
+  }
+
+  assert {
+    condition     = module.layer_bucket["bronze"].name == "lab-data-dev-bronze-123456789012"
+    error_message = "O bucket do bronze deve se chamar <prefixo>-bronze-<account_id>."
+  }
+
+  assert {
+    condition     = module.layer_bucket["bronze"].versioning_enabled
+    error_message = "O bronze deve ser versionado, para proteger o dado bruto."
   }
 
   assert {
@@ -45,32 +51,17 @@ run "buckets_seguem_a_convencao" {
   }
 }
 
-run "so_o_bronze_e_versionado" {
+run "database_do_bronze_aponta_para_o_bucket" {
   command = plan
 
   assert {
-    condition     = module.layer_bucket["bronze"].versioning_enabled
-    error_message = "O bronze deve ser versionado, para proteger o dado bruto."
+    condition     = aws_glue_catalog_database.layer["bronze"].name == "lab_data_dev_bronze"
+    error_message = "O database deve se chamar lab_data_<env>_bronze."
   }
 
   assert {
-    condition     = !module.layer_bucket["silver"].versioning_enabled && !module.layer_bucket["gold"].versioning_enabled
-    error_message = "Silver e gold não devem ser versionados: o Iceberg já guarda snapshots."
-  }
-}
-
-run "databases_do_glue_apontam_para_o_bucket_da_camada" {
-  command = plan
-
-  assert {
-    condition = {
-      for k, db in aws_glue_catalog_database.layer : k => [db.name, db.location_uri]
-      } == {
-      bronze = ["lab_data_dev_bronze", "s3://lab-data-dev-bronze-123456789012/"]
-      silver = ["lab_data_dev_silver", "s3://lab-data-dev-silver-123456789012/"]
-      gold   = ["lab_data_dev_gold", "s3://lab-data-dev-gold-123456789012/"]
-    }
-    error_message = "Cada database deve se chamar lab_data_<env>_<camada> e apontar para o bucket da camada."
+    condition     = aws_glue_catalog_database.layer["bronze"].location_uri == "s3://lab-data-dev-bronze-123456789012/"
+    error_message = "O database do bronze deve apontar para o bucket do bronze."
   }
 }
 
@@ -94,7 +85,7 @@ run "workgroup_tem_limite_de_custo" {
 
   assert {
     condition     = aws_athena_workgroup.this.configuration[0].engine_version[0].selected_engine_version == "Athena engine version 3"
-    error_message = "O workgroup deve usar o Athena engine v3 (suporte a Iceberg)."
+    error_message = "O workgroup deve usar o Athena engine v3."
   }
 
   assert {
@@ -103,7 +94,7 @@ run "workgroup_tem_limite_de_custo" {
   }
 }
 
-run "contrato_publica_os_parametros_esperados" {
+run "contrato_do_bronze" {
   command = apply
 
   assert {
@@ -112,10 +103,6 @@ run "contrato_publica_os_parametros_esperados" {
       "/lab-data/dev/lakehouse/athena_workgroup",
       "/lab-data/dev/lakehouse/bronze_bucket",
       "/lab-data/dev/lakehouse/glue_database_bronze",
-      "/lab-data/dev/lakehouse/glue_database_gold",
-      "/lab-data/dev/lakehouse/glue_database_silver",
-      "/lab-data/dev/lakehouse/gold_bucket",
-      "/lab-data/dev/lakehouse/silver_bucket",
     ])
     error_message = "Os parâmetros do contrato mudaram: atualize data-platform/docs/contratos.md."
   }
@@ -124,6 +111,54 @@ run "contrato_publica_os_parametros_esperados" {
     condition     = aws_ssm_parameter.contract["glue_database_bronze"].value == "lab_data_dev_bronze"
     error_message = "O contrato deve publicar o nome do database do bronze."
   }
+}
+
+# --- Próximas camadas: o código já suporta silver e gold ---------------------
+
+run "silver_e_gold_quando_ligadas" {
+  command = apply
+
+  variables {
+    layers = ["bronze", "silver", "gold"]
+  }
+
+  assert {
+    condition = {
+      for k, b in module.layer_bucket : k => [b.name, b.versioning_enabled]
+      } == {
+      bronze = ["lab-data-dev-bronze-123456789012", true]
+      silver = ["lab-data-dev-silver-123456789012", false]
+      gold   = ["lab-data-dev-gold-123456789012", false]
+    }
+    error_message = "Silver e gold devem seguir a convenção de nomes e não ser versionadas (o Iceberg já guarda snapshots)."
+  }
+
+  assert {
+    condition     = length(aws_ssm_parameter.contract) == 8
+    error_message = "Com as três camadas, o contrato deve ter 8 parâmetros."
+  }
+}
+
+# --- Validações --------------------------------------------------------------
+
+run "rejeita_camada_desconhecida" {
+  command = plan
+
+  variables {
+    layers = ["bronze", "platinum"]
+  }
+
+  expect_failures = [var.layers]
+}
+
+run "exige_o_bronze" {
+  command = plan
+
+  variables {
+    layers = ["silver"]
+  }
+
+  expect_failures = [var.layers]
 }
 
 run "rejeita_limite_abaixo_do_minimo_do_athena" {

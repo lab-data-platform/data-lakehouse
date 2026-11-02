@@ -13,6 +13,8 @@
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+# Variáveis do ambiente local (moto): sem valores pessoais, precisam ir para o CI
+!local/*.tfvars
 crash.log
 *.tfplan
 
@@ -33,3 +35,6 @@ logs/
 .vscode/
 .idea/
 .DS_Store
+
+# Terraform no ambiente local (moto)
+**/.terraform-local/

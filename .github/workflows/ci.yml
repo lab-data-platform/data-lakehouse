@@ -9,6 +9,52 @@ permissions:
   contents: read
 
 jobs:
+  terraform:
+    name: Terraform (fmt, validate, test)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Instalar o Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.17.1
+
+      - name: Verificar formatação
+        run: terraform fmt -check -recursive -diff
+
+      - name: Validar sintaxe
+        run: make validate
+
+      - name: Rodar testes
+        run: make test
+
+  local:
+    name: Integração local (moto)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Instalar o Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.17.1
+          terraform_wrapper: false
+
+      - name: Subir o moto e simular o contrato do foundation
+        run: make local-up
+
+      - name: Aplicar no moto, conferir e destruir
+        run: make local-test
+
+      - name: Derrubar o moto
+        if: always()
+        run: make local-down
+
   pre-commit:
     name: pre-commit
     runs-on: ubuntu-latest
@@ -29,4 +75,4 @@ jobs:
       - name: Rodar os hooks em todos os arquivos
         run: pre-commit run --all-files --show-diff-on-failure
         env:
-          SKIP: no-commit-to-branch
+          SKIP: no-commit-to-branch,terraform_fmt

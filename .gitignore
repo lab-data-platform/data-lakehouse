@@ -33,3 +33,6 @@ logs/
 .vscode/
 .idea/
 .DS_Store
+
+# Terraform no ambiente local (moto)
+**/.terraform-local/

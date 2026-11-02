@@ -13,6 +13,8 @@
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+# Variáveis do ambiente local (moto): sem valores pessoais, precisam ir para o CI
+!local/*.tfvars
 crash.log
 *.tfplan
 
